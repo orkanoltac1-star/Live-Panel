@@ -34,7 +34,7 @@ input{width:100px}
 h4{margin:10px 0 3px;font-size:12px;font-weight:600;color:var(--mu)}
 @media(min-width:620px){#grid{grid-template-columns:1fr 1fr;grid-template-areas:"price price" "cmp fut" "opn opn" "ob vol" "tr tr"}}
 @media(min-width:1000px){#grid{grid-template-columns:1.1fr 1fr 1fr;grid-template-areas:"price cmp fut" "ob vol tr" "ob opn tr"}}
-#cPrice{grid-area:price}#cCmp{grid-area:cmp}#cFut{grid-area:fut}#cOb{grid-area:ob}#cVol{grid-area:vol}#cTr{grid-area:tr}#cOpn{grid-area:opn}
+@media(min-width:620px){#cPrice{grid-area:price}#cCmp{grid-area:cmp}#cFut{grid-area:fut}#cOb{grid-area:ob}#cVol{grid-area:vol}#cTr{grid-area:tr}#cOpn{grid-area:opn}}
 .buy{color:var(--buy)}.sell{color:var(--sell)}.mu{color:var(--mu)}
 .k{font-size:11px;color:var(--mu)}
 .row{display:flex;justify-content:space-between;gap:8px}
