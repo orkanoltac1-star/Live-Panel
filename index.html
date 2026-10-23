@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2029">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Binance Live-Panel</title>
+<style>
+:root{--bg:#171b22;--pn:#202631;--hd:#1b2029;--ln:#2e3646;--tx:#dbe0ea;--mu:#8b95a8;--buy:#38b48b;--sell:#e5625d;--wh:#e8b04a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+#app{min-height:100vh;background:var(--bg)}
+button,input{background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:4px;padding:5px 9px;font:inherit}
+button{cursor:pointer}button:hover{border-color:var(--mu)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--wh);outline-offset:1px}
+button.on{border-color:var(--wh);color:var(--wh);font-weight:600}
+input{width:100px}
+@media(pointer:coarse){button,input{padding:10px 12px;font-size:14px}#hd{padding-top:max(8px,env(safe-area-inset-top))}}
+/* Kopfleiste */
+#hd{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:8px 12px;background:var(--hd);border-bottom:1px solid var(--ln)}
+#hd .brand{font-weight:700;font-size:14px;margin-right:4px}
+#hd label{color:var(--mu);font-size:12px;display:flex;align-items:center;gap:6px}
+.grp{display:flex;gap:6px;align-items:center}
+.tabs{display:flex}.tabs button{border-radius:0}.tabs button:first-child{border-radius:4px 0 0 4px}.tabs button:last-child{border-radius:0 4px 4px 0;border-left:0}
+#st{margin-left:auto;font-size:12px;color:var(--mu)}
+/* Raster */
+#grid{display:grid;gap:10px;padding:10px;grid-template-columns:1fr}
+.pn{background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:10px 12px;min-width:0}
+.pn h2{margin:0 0 8px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+.pn h2 .mt{font-size:11px;font-weight:600;color:var(--wh)}
+h4{margin:10px 0 3px;font-size:12px;font-weight:600;color:var(--mu)}
+@media(min-width:620px){#grid{grid-template-columns:1fr 1fr;grid-template-areas:"price price" "cmp fut" "opn opn" "ob vol" "tr tr"}}
+@media(min-width:1000px){#grid{grid-template-columns:1.1fr 1fr 1fr;grid-template-areas:"price cmp fut" "ob vol tr" "ob opn tr"}}
+#cPrice{grid-area:price}#cCmp{grid-area:cmp}#cFut{grid-area:fut}#cOb{grid-area:ob}#cVol{grid-area:vol}#cTr{grid-area:tr}#cOpn{grid-area:opn}
+.buy{color:var(--buy)}.sell{color:var(--sell)}.mu{color:var(--mu)}
+.k{font-size:11px;color:var(--mu)}
+.row{display:flex;justify-content:space-between;gap:8px}
+/* Preis */
+.price{font-size:34px;font-weight:700;line-height:1.1}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:10px}
+.stats b{display:block;font-size:14px;font-weight:600}
+/* Balken */
+.split{height:9px;border-radius:5px;overflow:hidden;display:flex;background:var(--ln);margin:4px 0 3px}
+.split i{display:block;height:100%}.split .b{background:var(--buy)}.split .s{background:var(--sell)}
+@media(prefers-reduced-motion:no-preference){.split i{transition:width .3s}}
+/* Tabellen */
+table{width:100%;border-collapse:collapse}
+th{font-weight:500;color:var(--mu);font-size:11px;text-align:right;padding:2px 0 4px}
+th:first-child,td:first-child{text-align:left}
+td{padding:4px 0;border-top:1px solid var(--ln);text-align:right}
+td:first-child{color:var(--mu)}
+/* Orderbuch */
+.cols{display:flex;justify-content:space-between;font-size:11px;color:var(--mu);padding:0 4px 3px}
+.ob div{position:relative;display:flex;justify-content:space-between;padding:1px 4px;font-size:12px}
+.ob div u{position:absolute;right:0;top:0;bottom:0;opacity:.18}
+.ob div span{position:relative}
+.ob .a u{background:var(--sell)}.ob .b u{background:var(--buy)}
+.mid{text-align:center;color:var(--mu);font-size:11px;padding:5px 0;border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);margin:3px 0}
+/* Trades */
+.tcols,#tl div{display:grid;grid-template-columns:1fr 1.2fr .8fr;font-size:12px;padding:1px 4px}
+.tcols{font-size:11px;color:var(--mu);padding-bottom:3px}
+.tcols span:nth-child(n+2),#tl span:nth-child(n+2){text-align:right}
+#tl .w{background:rgba(232,176,74,.14);font-weight:700;border-left:3px solid var(--wh);padding-left:3px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hd">
+    <span class="brand">Binance Live-Panel</span>
+    <div class="grp"><label for="sym">Handelspaar</label><input id="sym" value="BTCUSDT" spellcheck="false"><button id="go">Laden</button></div>
+    <div class="grp"><span class="k">Markt anzeigen</span><div class="tabs"><button id="tS" class="on">Spot</button><button id="tF">Futures</button></div></div>
+    <label for="thr" title="Ab diesem Dollar-Wert gilt ein einzelner Trade als Wal-Trade">Wal-Schwelle in $<input id="thr" type="number" value="100000" step="10000" style="width:90px"></label>
+    <button id="pip" title="Kleines Fenster, das über anderen Fenstern bleibt">Pop-up öffnen</button>
+    <span id="st">verbinde …</span>
+  </header>
+
+  <main id="grid">
+    <section class="pn" id="cPrice" aria-label="Preis">
+      <h2>Preis <span class="mt">Spot</span></h2>
+      <div class="price" id="px">–</div>
+      <div id="chg" class="mu">–</div>
+      <div class="stats">
+        <div><span class="k">24h Hoch</span><b id="hi">–</b></div>
+        <div><span class="k">24h Tief</span><b id="lo">–</b></div>
+        <div><span class="k">24h Volumen</span><b id="v24">–</b></div>
+        <div><span class="k">Handelspaar</span><b id="sy">–</b></div>
+      </div>
+    </section>
+
+    <section class="pn" id="cOpn" aria-label="Wochen-, Monats- und Jahres-Open">
+      <h2>Wochen-, Monats- und Jahres-Open <span class="mt">Spot</span></h2>
+      <table>
+        <tr><th>Zeitraum</th><th>Open-Preis</th><th>Abstand zum Preis</th><th>Beginn (UTC)</th></tr>
+        <tr><td>Weekly Open</td><td id="ow_p">–</td><td id="ow_d">–</td><td id="ow_t" class="mu">–</td></tr>
+        <tr><td>Monthly Open</td><td id="om_p">–</td><td id="om_d">–</td><td id="om_t" class="mu">–</td></tr>
+        <tr><td>Yearly Open</td><td id="oy_p">–</td><td id="oy_d">–</td><td id="oy_t" class="mu">–</td></tr>
+      </table>
+      <div class="k" style="margin-top:8px">Open = Eröffnungskurs der aktuellen Wochen-, Monats- bzw. Jahreskerze bei Binance. Die Woche beginnt Montag 00:00 UTC, in Deutschland also 01:00 bzw. 02:00 Uhr. <span class="buy">Grün</span> = Preis liegt über dem Open, <span class="sell">Rot</span> = darunter.</div>
+    </section>
+
+    <section class="pn" id="cCmp" aria-label="Spot gegen Futures">
+      <h2>Spot gegen Futures</h2>
+      <table>
+        <tr><th></th><th>Spot</th><th>Futures</th></tr>
+        <tr><td>Preis</td><td id="cp_s">–</td><td id="cp_f">–</td></tr>
+        <tr><td>Volumen 1 Min</td><td id="cv_s">–</td><td id="cv_f">–</td></tr>
+        <tr><td>Käuferanteil 1 Min</td><td id="cb_s">–</td><td id="cb_f">–</td></tr>
+        <tr><td>Wal-Käufe 5 Min</td><td id="cwb_s" class="buy">–</td><td id="cwb_f" class="buy">–</td></tr>
+        <tr><td>Wal-Verkäufe 5 Min</td><td id="cws_s" class="sell">–</td><td id="cws_f" class="sell">–</td></tr>
+      </table>
+      <div class="row" style="margin-top:8px"><span class="k">Aufschlag Futures zu Spot</span><b id="basis">–</b></div>
+    </section>
+
+    <section class="pn" id="cFut" aria-label="Futures-Kennzahlen">
+      <h2>Futures-Kennzahlen <span class="mt">Perpetual</span></h2>
+      <div class="stats">
+        <div><span class="k">Funding-Rate</span><b id="fr">–</b></div>
+        <div><span class="k">Nächstes Funding in</span><b id="fc">–</b></div>
+        <div><span class="k">Mark-Preis</span><b id="mk">–</b></div>
+        <div><span class="k">Open Interest (Coin)</span><b id="oi">–</b></div>
+        <div><span class="k">Open Interest (Dollar)</span><b id="oiu">–</b></div>
+        <div><span class="k">OI-Änderung seit Start</span><b id="oid">–</b></div>
+      </div>
+    </section>
+
+    <section class="pn" id="cOb" aria-label="Orderbuch">
+      <h2>Orderbuch <span class="mt">Spot</span></h2>
+      <div class="cols"><span>Preis (USDT)</span><span>Menge (Coin)</span></div>
+      <div class="ob" id="obA"></div>
+      <div class="mid" id="mid">–</div>
+      <div class="ob" id="obB"></div>
+      <div class="k" style="margin-top:6px"><span class="sell">Rot</span> = Verkaufsorders (Asks), <span class="buy">Grün</span> = Kaufaufträge (Bids)</div>
+    </section>
+
+    <section class="pn" id="cVol" aria-label="Volumen und Wal-Trades">
+      <h2>Volumen und Wale <span class="mt">Spot</span></h2>
+      <h4 style="margin-top:0">Taker-Volumen, letzte 1 Minute <span class="k" id="v1t"></span></h4>
+      <div class="split"><i class="b" id="v1b"></i><i class="s" id="v1s"></i></div>
+      <div class="row"><span class="buy" id="v1bn">–</span><span class="sell" id="v1sn">–</span></div>
+      <h4>Taker-Volumen, letzte 5 Minuten <span class="k" id="v5t"></span></h4>
+      <div class="split"><i class="b" id="v5b"></i><i class="s" id="v5s"></i></div>
+      <div class="row"><span class="buy" id="v5bn">–</span><span class="sell" id="v5sn">–</span></div>
+      <h4>Wal-Trades, letzte 5 Minuten</h4>
+      <div class="split"><i class="b" id="wb"></i><i class="s" id="ws"></i></div>
+      <div class="row"><span class="buy" id="wbn">–</span><span class="sell" id="wsn">–</span></div>
+      <div class="k" style="margin-top:8px">Käufe = Taker kaufte zum Ask, Verkäufe = Taker verkaufte zum Bid. Wal = einzelner Trade ab der Wal-Schwelle.</div>
+    </section>
+
+    <section class="pn" id="cTr" aria-label="Letzte Trades">
+      <h2>Letzte Trades <span class="mt">Spot</span></h2>
+      <div class="tcols"><span>Preis</span><span>Wert (USDT)</span><span>Uhrzeit</span></div>
+      <div id="tl"></div>
+      <div class="k" style="margin-top:6px">🐋 markiert Wal-Trades. <span class="buy">Grün</span> = Kauf, <span class="sell">Rot</span> = Verkauf.</div>
+    </section>
+  </main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const nf=(n,d=2)=>isFinite(n)?Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
+const usd=n=>n>=1e9?nf(n/1e9)+' Mrd $':n>=1e6?nf(n/1e6)+' Mio $':n>=1e3?nf(n/1e3,1)+' Tsd $':nf(n,0)+' $';
+const dec=p=>p>=1000?2:p>=10?3:p>=1?4:6;
+const mk0=()=>({sec:{},tl:[],book:null,tick:null});
+const O={spot:{},fut:{}};let opTimer=null;
+let sym='BTCUSDT',gen=0,sockets=[],oiTimer=null,oiBase=null,mark=0,nextFund=0,cur='spot',D={spot:mk0(),fut:mk0()},dirty=false;
+
+function connect(){
+  gen++;const g=gen;
+  sockets.forEach(s=>{s.onclose=null;try{s.close()}catch(e){}});sockets=[];
+  clearInterval(oiTimer);clearInterval(opTimer);O.spot={};O.fut={};oiBase=null;D={spot:mk0(),fut:mk0()};mark=0;nextFund=0;
+  ['fr','fc','mk','oi','oiu','oid'].forEach(i=>$(i).textContent='–');$('sy').textContent=sym;
+  const s=sym.toLowerCase();
+  for(const [m,host] of [['spot','stream.binance.com:9443'],['fut','fstream.binance.com']]){
+    open(`wss://${host}/stream?streams=${s}@depth20@100ms/${s}@aggTrade/${s}@ticker`,g,x=>{
+      const d=x.data,t=x.stream.split('@')[1];
+      if(t.startsWith('depth'))book(m,d);else if(t==='aggTrade')trade(m,d);else tick(m,d);
+    },m==='fut');
+  }
+  open(`wss://fstream.binance.com/ws/${s}@markPrice@1s`,g,d=>{
+    mark=+d.p;nextFund=d.T;$('mk').textContent=nf(mark,dec(mark));
+    $('fr').textContent=nf(d.r*100,4)+' %';$('fr').className=d.r>=0?'buy':'sell';
+  },true);
+  pollOI(g);oiTimer=setInterval(()=>pollOI(g),5000);loadOpens(g);opTimer=setInterval(()=>loadOpens(g),300000);show(cur);
+}
+function open(url,g,fn,quiet){
+  const ws=new WebSocket(url);sockets.push(ws);
+  ws.onopen=()=>{if(!quiet)$('st').textContent='live verbunden'};
+  ws.onmessage=e=>{if(g===gen)fn(JSON.parse(e.data))};
+  ws.onclose=()=>{if(g!==gen)return;if(!quiet)$('st').textContent='getrennt, neuer Versuch …';setTimeout(()=>{if(g===gen){sockets=sockets.filter(x=>x!==ws);open(url,g,fn,quiet)}},2000)};
+  ws.onerror=()=>{if(!quiet)$('st').textContent='Fehler: Paar oder Netzwerk prüfen'};
+}
+async function pollOI(g){
+  try{
+    const r=await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol='+sym);
+    const d=await r.json();if(g!==gen||!d.openInterest)return;
+    const v=+d.openInterest;if(oiBase===null)oiBase=v;
+    $('oi').textContent=nf(v,0)+' '+sym.replace(/USDT$|USDC$/,'');
+    $('oiu').textContent=mark?usd(v*mark):'–';
+    const ch=(v-oiBase)/oiBase*100;$('oid').textContent=(ch>=0?'+':'')+nf(ch,2)+' %';$('oid').className=ch>=0?'buy':'sell';
+  }catch(e){}
+}
+async function loadOpens(g){
+  const y0=Date.UTC(new Date().getUTCFullYear(),0,1);
+  for(const [m,base] of [['spot','https://api.binance.com/api/v3/klines'],['fut','https://fapi.binance.com/fapi/v1/klines']]){
+    const q=(i,extra='')=>fetch(`${base}?symbol=${sym}&interval=${i}&limit=1${extra}`).then(r=>r.json()).then(a=>Array.isArray(a)&&a[0]?{t:a[0][0],open:+a[0][1]}:null).catch(()=>null);
+    const [w,mo,y]=await Promise.all([q('1w'),q('1M'),q('1M','&startTime='+y0)]);
+    if(g!==gen)return;
+    O[m]={w,mo,y:y&&y.t===y0?y:null};
+  }
+}
+function opens(){
+  const o=O[cur],t=D[cur].tick,p=t?+t.c:0;
+  [['w','w'],['mo','m'],['y','y']].forEach(([k,id])=>{
+    const x=o[k];
+    if(!x){$('o'+id+'_p').textContent='–';$('o'+id+'_d').textContent='–';$('o'+id+'_t').textContent=o.w||o.mo?'nicht verfügbar':'lädt …';return}
+    $('o'+id+'_p').textContent=nf(x.open,dec(x.open));
+    if(p){const d=(p-x.open)/x.open*100;$('o'+id+'_d').textContent=(d>=0?'+':'')+nf(d,2)+' %';$('o'+id+'_d').className=d>=0?'buy':'sell'}
+    $('o'+id+'_t').textContent=new Date(x.t).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
+  });
+}
+function show(m){
+  cur=m;$('tS').className=m==='spot'?'on':'';$('tF').className=m==='fut'?'on':'';
+  document.querySelectorAll('#cPrice .mt,#cOb .mt,#cVol .mt,#cTr .mt,#cOpn .mt').forEach(e=>e.textContent=m==='spot'?'Spot':'Futures');
+  const x=D[m];
+  if(x.tick)tick(m,x.tick);else['px','chg','hi','lo','v24'].forEach(i=>$(i).textContent='–');
+  if(x.book)book(m,x.book);else{$('obA').innerHTML=$('obB').innerHTML='';$('mid').textContent='–'}
+  dirty=true;
+}
+function tick(m,d){
+  D[m].tick=d;if(m!==cur)return;
+  const p=+d.c;$('px').textContent=nf(p,dec(p));$('px').className='price '+(+d.P>=0?'buy':'sell');
+  $('chg').textContent=(+d.P>=0?'+':'')+nf(+d.P,2)+' % in 24h';
+  $('hi').textContent=nf(+d.h,dec(p));$('lo').textContent=nf(+d.l,dec(p));$('v24').textContent=usd(+d.q);
+}
+function trade(m,d){
+  const x=D[m],p=+d.p,q=+d.q,v=p*q,buy=!d.m,s=Math.floor(d.T/1000);
+  const b=x.sec[s]||(x.sec[s]={bu:0,se:0,wb:0,ws:0});
+  if(buy)b.bu+=v;else b.se+=v;
+  const whale=v>=+$('thr').value;
+  if(whale){if(buy)b.wb+=v;else b.ws+=v}
+  x.tl.unshift({t:d.T,p,v,buy,whale});if(x.tl.length>30)x.tl.pop();if(m===cur)dirty=true;
+}
+function book(m,d){
+  D[m].book=d;if(m!==cur)return;
+  const A=d.asks||d.a,B=d.bids||d.b;
+  const a=A.slice(0,10).map(x=>[+x[0],+x[1]]),b=B.slice(0,10).map(x=>[+x[0],+x[1]]);
+  const mx=Math.max(...a.map(x=>x[1]),...b.map(x=>x[1])),pd=dec(b[0]?b[0][0]:1);
+  const row=(x,c)=>`<div class="${c}"><u style="width:${x[1]/mx*100}%"></u><span class="${c==='a'?'sell':'buy'}">${nf(x[0],pd)}</span><span>${nf(x[1],4)}</span></div>`;
+  $('obA').innerHTML=a.slice().reverse().map(x=>row(x,'a')).join('');
+  $('obB').innerHTML=b.map(x=>row(x,'b')).join('');
+  const sb=b.reduce((n,x)=>n+x[1],0),sa=a.reduce((n,x)=>n+x[1],0);
+  if(a[0]&&b[0])$('mid').textContent='Spread '+nf(a[0][0]-b[0][0],pd)+' · Käuferanteil im Buch '+nf(sb/(sb+sa)*100,0)+' %';
+}
+function split(bI,sI,bN,sN,tI,u,d){
+  const t=u+d;$(bI).style.width=t?u/t*100+'%':'50%';$(sI).style.width=t?d/t*100+'%':'50%';
+  $(bN).textContent='Käufe '+usd(u);$(sN).textContent='Verkäufe '+usd(d);if(tI)$(tI).textContent=t?'· '+nf(u/t*100,0)+' % Käufer':'';
+}
+function agg(m){
+  const now=Math.floor(Date.now()/1000),a=[0,0,0,0],c=[0,0],sec=D[m].sec;
+  for(const k in sec){const age=now-k;if(age>300){delete sec[k];continue}const b=sec[k];
+    a[0]+=b.bu;a[1]+=b.se;a[2]+=b.wb;a[3]+=b.ws;if(age<60){c[0]+=b.bu;c[1]+=b.se}}
+  return{a,c};
+}
+function render(){
+  const s=agg('spot'),f=agg('fut'),x=cur==='spot'?s:f;
+  split('v1b','v1s','v1bn','v1sn','v1t',x.c[0],x.c[1]);split('v5b','v5s','v5bn','v5sn','v5t',x.a[0],x.a[1]);
+  split('wb','ws','wbn','wsn',null,x.a[2],x.a[3]);
+  // Vergleich
+  const st=D.spot.tick,ft=D.fut.tick,pr=t=>t?nf(+t.c,dec(+t.c)):'–';
+  $('cp_s').textContent=pr(st);$('cp_f').textContent=pr(ft);
+  [['s',s],['f',f]].forEach(([k,o])=>{const t=o.c[0]+o.c[1];
+    $('cv_'+k).textContent=usd(t);$('cb_'+k).textContent=t?nf(o.c[0]/t*100,0)+' %':'–';
+    $('cwb_'+k).textContent=usd(o.a[2]);$('cws_'+k).textContent=usd(o.a[3])});
+  if(st&&ft){const df=+ft.c-+st.c;$('basis').textContent=(df>=0?'+':'')+nf(df,dec(+st.c))+' ('+nf(df/+st.c*100,3)+' %)'}else $('basis').textContent='–';
+  opens();
+  if(dirty){dirty=false;$('tl').innerHTML=D[cur].tl.map(x=>{
+    const tm=new Date(x.t).toLocaleTimeString('de-DE');
+    return `<div class="${x.whale?'w':''}"><span class="${x.buy?'buy':'sell'}">${nf(x.p,dec(x.p))}</span><span>${x.whale?'🐋 ':''}${usd(x.v)}</span><span class="mu">${tm}</span></div>`}).join('')}
+  if(nextFund){const t=Math.max(0,Math.floor((nextFund-Date.now())/1000));
+    $('fc').textContent=[t/3600|0,(t%3600)/60|0,t%60].map(n=>String(n).padStart(2,'0')).join(':')}
+}
+setInterval(render,250);
+
+$('tS').onclick=()=>show('spot');$('tF').onclick=()=>show('fut');
+$('go').onclick=()=>{sym=$('sym').value.trim().toUpperCase()||'BTCUSDT';$('sym').value=sym;connect()};
+$('sym').addEventListener('keydown',e=>{if(e.key==='Enter')$('go').click()});
+$('pip').onclick=async()=>{
+  if(!window.documentPictureInPicture){window.open(location.href,'_blank','popup,width=460,height=900');return}
+  try{
+    const app=$('app'),w=await documentPictureInPicture.requestWindow({width:460,height:900});
+    w.document.head.append(document.querySelector('style').cloneNode(true));
+    w.document.body.append(app);
+    w.addEventListener('pagehide',()=>document.body.append(app));
+  }catch(e){$('st').textContent='Pop-up nicht möglich'}
+};
+if(!window.documentPictureInPicture&&matchMedia('(pointer:coarse)').matches)$('pip').style.display='none';
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+connect();
+</script>
+</body>
+</html>
